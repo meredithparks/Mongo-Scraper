@@ -25,7 +25,7 @@ app.use(express.static("public"));
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-const MONGODB_URI = process.env.heroku_czdqmb1p || "mongodb://andyj:andy123@ds119343.mlab.com:19343/heroku_czdqmb1p
+const MONGODB_URI = process.env.heroku_czdqmb1p || "mongodb://localhost/mongoHeadlines";
 
 mongoose.Promise = Promise;
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
