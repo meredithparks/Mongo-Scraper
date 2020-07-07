@@ -1,120 +1,42 @@
-//dependencies
-const express = require("express");
-const exphbs = require("express-handlebars");
-const logger = require("morgan");
-const request = require("request");
-const cheerio = require("cheerio");
-const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
-const axios = require("axios");
+var express = require("express");
+var mongoose = require("mongoose");
+var expressHandlebars = require("express-handlebars");
+var bodyParser = require("body-parser");
 
-//Require models
-const db = require("./models");
+var PORT = process.env.PORT || 3000;
 
-const PORT = 3000;
+var app = express();
 
-//initialize express
-const app = express();
+var router = express.Router();
 
-app.use(logger("dev"));
+require("./config/routes")(router);
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(__dirname + "/public"));
 
-app.use(express.static("public"));
-
-app.engine("handlebars", exphbs({ defaultLayout: "main" }));
+app.engine("handlebars", expressHandlebars({
+  defaultLayout: "main"
+}));
 app.set("view engine", "handlebars");
 
-const MONGODB_URI = process.env.heroku_czdqmb1p || "mongodb://localhost/mongoHeadlines";
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 
-mongoose.Promise = Promise;
-mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
+app.use(router);
 
-//database configuration
-// const databaseUrl = "nytdb";
-// const collections = ["scrapedArticles"];
+var db = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
-
-// Routes
-
-app.get("/", function(req, res) {
-    res.render("index");
-});
-// GET route for scraping WSJ website
-app.get("/scrape", function (req, res) {
-    axios.get("https://www.nytimes.com/").then(function(response) {
-        const $ = cheerio.load(response.data);
-
-        $("article a").each(function(i, element) {
-            const result = {};
-            const pTag = $(this).children("p").text();
-            const ulTag = $(this).children("ul").text();
-
-            if (pTag) {
-            result.title = $(this).children().children("h2").text();
-            result.link = $(this).attr("href");
-            result.summary = pTag
-            } else {
-                result.title = $(this).children().children("h2").text();
-                result.link = $(this).attr("href");
-                result.summary =  ulTag;
-            }
-
-            db.Article.create(result)
-                .then(function(dbArticle) {
-                console.log(dbArticle);
-                })
-                .catch(function(err) {
-                console.log(err);
-                });
-        });
-        res.send("Scrape Complete");
-    });
+mongoose.connect(db, function(error) {
+ 
+   if (error) {
+    console.log(error);
+  }
+ 
+  else {
+    console.log("mongoose connection is successful");
+  }
 });
 
-app.get("/articles", function(req, res) {
-    db.Article.find({}).then(function(dbArticle) {
-        res.json(dbArticle);
-    })
-    .catch(function (err) {
-        res.json(err)
-    })
-})
-
-// Route for grabbing a specific Article by id, populate it with it's note
-app.get("/articles/:id", function(req, res) {
-    // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-    db.Article.findOne({ _id: req.params.id })
-      // ..and populate all of the notes associated with it
-      .populate("note")
-      .then(function(dbArticle) {
-        // If we were able to successfully find an Article with the given id, send it back to the client
-        res.json(dbArticle);
-      })
-      .catch(function(err) {
-        // If an error occurred, send it to the client
-        res.json(err);
-      });
-  });
-
-  // Route for saving/updating an Article's associated Note
-app.post("/articles/:id", function(req, res) {
-    // Create a new note and pass the req.body to the entry
-    db.Note.create(req.body)
-      .then(function(dbNote) {
-
-        return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
-      })
-      .then(function(dbArticle) {
-        // If we were able to successfully update an Article, send it back to the client    
-        res.json(dbArticle);
-      })
-      .catch(function(err) {
-        // If an error occurred, send it to the client
-        res.json(err);
-      });
-  });
-
-app.listen(PORT, function () {
-    console.log(`App running on port ${PORT}!`);
+app.listen(PORT, function() {
+  console.log("Listening on port:" + PORT);
 });
