@@ -1,0 +1,15 @@
+.nav-wrapper {
+    background-color:#01579b;
+}
+
+a#save {
+    margin-left: 10px;
+}
+
+.card-action a {
+    color: black !important;
+}
+
+.delete-button {
+    margin-left: 10px;
+}
