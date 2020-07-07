@@ -1,0 +1,14 @@
+.jumbotron {
+    background-image: url("../images/news.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    color: rgb(19, 16, 16)ff
+}
+
+textarea {
+    border: 1px solid black;
+    resize: none;
+    width: 400px;
+    height: 100px
+
+}
